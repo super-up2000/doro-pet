@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;
+    -webkit-tap-highlight-color:transparent}
+  #stage{position:fixed;inset:0}
+  #bubble{position:fixed;left:50%;top:-4px;transform:translateX(-50%);
+    background:rgba(255,255,255,.94);color:#4a3a42;font:13px/1.5 -apple-system,sans-serif;
+    padding:7px 13px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.25);
+    opacity:0;transition:opacity .3s;pointer-events:none;max-width:220px;white-space:pre-line;
+    z-index:10}
+  #bubble.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="bubble"></div>
+
+<script src="vendor/pixi.min.js"></script>
+<script src="vendor/live2dcubismcore.min.js"></script>
+<script src="vendor/pixi-live2d-display.min.js"></script>
+<script>
+(function () {
+  var width = 240, height = 320;
+
+  // PixiJS v7 WebGL
+  var app = new PIXI.Application({
+    width: width, height: height,
+    backgroundAlpha: 0,
+    antialias: true,
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true
+  });
+  document.getElementById('stage').appendChild(app.view);
+
+  var model = null;
+  var bubble = document.getElementById('bubble');
+  var bubbleTimer = null;
+  var lines = [
+    "嗨～我是 Doro ✨", "今天也要加油鸭！", "陪着你呢～", "想我了吗？",
+    "啦啦啦～", "别太累啦，休息会儿", "我随时都在～", "嘿嘿，抱抱～",
+    "你看起来好忙，喝口水嘛", "摸头是有限量的哦"
+  ];
+  var motions = ['dance','cheer','nod','shake','standup','struggle','surprised','run_plus'];
+
+  function say(text) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(function () { bubble.classList.remove('show'); }, 2800);
+  }
+
+  function playMotion(name) {
+    if (!model) return;
+    try { model.motionManager.start(name, 0); } catch (e) {}
+  }
+  function playRandomMotion() {
+    playMotion(motions[Math.floor(Math.random() * motions.length)]);
+  }
+
+  function loadModel() {
+    // 1) 初始化 Cubism Core（UMD 挂到 window.Live2DCubismCore / PIXI.Live2DCubismCore）
+    var core = window.Live2DCubismCore;
+    if (core && core.initialize) core.initialize();
+    if (window.PIXI && PIXI.Live2DCubismCore && PIXI.Live2DCubismCore.initialize) {
+      PIXI.Live2DCubismCore.initialize();
+    }
+
+    // 2) LoaderResources 从 file 协议加载 model3.json
+    var res = new PIXI.Live2D.LoaderResources('live2d/doro/Doro.model3.json');
+    res.load().then(function (result) {
+      PIXI.Live2D.InteractiveModel.from(result.model, 2, 10)
+        .then(function (m) {
+          model = m;
+          app.stage.addChild(model);
+          model.anchor.set(0.5, 1);
+          model.x = width / 2;
+          model.y = height - 6;
+          model.scale.set(0.62);
+          model.initialize().then(function () {
+            say(lines[0]);
+            playMotion('standup');
+            // 周期性随机台词
+            setInterval(function () {
+              if (Math.random() < 0.4) {
+                say(lines[Math.floor(Math.random() * lines.length)]);
+              }
+            }, 12000);
+            // 每 6 秒随机播一段动作
+            setInterval(playRandomMotion, 6000);
+            say('我来啦！点我说话，拖我走动 ✨');
+          }).catch(function (e) {
+            console.error(e);
+            say('动作初始化失败…(。﹏。)');
+          });
+        })
+        .catch(function (e) {
+          console.error('model init failed', e);
+          say('模型初始化失败 (。﹏。)');
+        });
+    }).catch(function (e) {
+      console.error('assets load failed', e);
+      document.body.innerHTML =
+        '<pre style="color:#f66;font:12px sans-serif;padding:10px;white-space:pre-wrap">' +
+        'live2d 资源加载失败：' + e + '\n\n请确认 assets/live2d/doro/ 下文件完整</pre>';
+    });
+  }
+
+  // 暴露给原生侧调用（轻点 / 甩抛）
+  window.doroPet = {
+    tap: function () {
+      if (!model) return;
+      say('嘿嘿～被你摸到啦 (๑>◡<๑)');
+      playMotion('cheer');
+    },
+    fling: function (dir) {
+      if (!model) return;
+      try {
+        model.x += (dir >= 0 ? 1 : -1) * 40; // 甩飞的视觉反馈
+      } catch (e) {}
+      say(dir >= 0 ? '呜…被甩飞了 >_<' : '哎呀，别甩我啦！');
+      playMotion('struggle');
+      setTimeout(function () {
+        // 回到原位
+        model.x = width / 2;
+        playRandomMotion();
+      }, 900);
+    }
+  };
+
+  window.addEventListener('load', function () {
+    if (window.PIXI && PIXI.Assets) {
+      // 先用 Assets 预载 model3.json，再走 LoaderResources
+      PIXI.Assets.load('live2d/doro/Doro.model3.json').then(loadModel)
+        .catch(function (e) {
+          // Assets 加载失败不阻塞：LoaderResources 内部也会 fetch，直接再试一次
+          loadModel();
+        });
+    } else {
+      loadModel();
+    }
+  });
+})();
+</script>
+</body>
+</html>
