@@ -142,7 +142,7 @@ public class PetService extends Service {
     }
 
     @Override
-    public void onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY;
     }
 
