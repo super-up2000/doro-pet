@@ -1,43 +1,43 @@
-yaml
+YAML
 
 
-name: Build Doro APK
+姓名: 构建Doro安装包
 
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
+在……之上:
+推:
+分支机构: [主要的,掌握]
+workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+工作:
+建立:
+run-on: Ubuntu-最新
+步骤:
+      - 姓名: 结帐
+uses: 操作/结帐@v4作/结帐@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+姓名姓名: 设置JDK17
+uses: 操作/设置-Java@v4
+和……一起:
+分布: temurin
+java版: '17'
 
-      - name: Set up Android
-        uses: android-actions/setup-android@v3
-        with:
-          packages:
-            - 'platforms;android-34'
-            - 'build-tools;34.0.0'
+      姓名 设置Android: 设置Android
+uses: android-actions/setup-android@v3
+和……一起:
+包:
+            - 没有任何的果.
+            - 'build-tools；34.0.0'
 
-      - name: Accept licenses
-        run: |
-          yes | sdkmanager --licenses || true
+      - 姓名: 接受许可证
+跑: |
+是|sdkmanager--licenses||true
 
-      - name: Build APK
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - 姓名: 构建安装包
+跑: ./gradlew:应用程序:assemblyDebug-no-daemon-stacktrace
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: doro-pet
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+      - 姓名: 上传安装包
+uses: 操作/上载工件@v4
+和……一起:
+姓名: doro-pet
+路径: app/build/outputs/apk/debug/*.apk
+if-no-file-found: 误差
