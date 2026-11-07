@@ -1,33 +1,21 @@
 name: Build Doro APK
-
 on:
   push:
-    branches: [ main, master ]
-
+    branches: [main, master]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
-      - name: Set up Android
-        uses: android-actions/setup-
-    android@v3
-        with:
-          packages:
-            - 'platforms;android-34'
-            - 'build-tools;34.0.0'
-      - name: Build APK
-        run: ./gradlew :app:assembleDebug --no-daemon
-      - name: Upload APK
+          java-version: "17"
+      - run: sudo yes | sudo sdkmanager "platforms;android-34" "build-tools;34.0.0"
+      - run: ./gradlew :app:assembleDebug
+      - uses: actions/upload-artifact@v4
         if: success()
-        uses: actions/upload-artifact@v4
         with:
           name: doro-pet
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error    
+          if-no-files-found: error
